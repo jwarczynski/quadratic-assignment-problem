@@ -1,6 +1,23 @@
 pub mod io;
 
+use instance::Instance;
 use rand;
+
+pub fn measure_time<F>(f: F, instance: &Instance, startting_perm: Vec<usize>) -> (u128, usize)
+where
+    F: Fn(&Instance, Vec<usize>) -> Vec<usize>,
+{
+    let mut iteration: usize = 0;
+    let mut total_elapsed = 0;
+    while total_elapsed < 1 || iteration < 10 {
+        let startting_perm = startting_perm.clone();
+        let start = std::time::Instant::now();
+        f(instance, startting_perm);
+        total_elapsed += start.elapsed().as_nanos();
+        iteration += 1;
+    }
+    (total_elapsed, iteration)
+}
 
 pub mod instance {
     use crate::argsort;
