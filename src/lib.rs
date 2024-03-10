@@ -21,6 +21,7 @@ where
 
 pub mod instance {
     use crate::argsort;
+    use crate::solver::dot_product_permuted;
 
     #[derive(Debug)]
     pub struct Instance {
@@ -49,6 +50,17 @@ pub mod instance {
 
         pub fn get_size(&self) -> usize {
             self.size
+        }
+
+        pub fn evaluate(&self, solution: &[usize]) -> usize {
+            let matrix_a = &self.matrix_a;
+            let matrix_b = &self.matrix_b;
+
+            matrix_a
+                .iter()
+                .zip(solution.iter().map(|&index| &matrix_b[index]))
+                .map(|(row_a, row_b)| dot_product_permuted(row_a, row_b, solution))
+                .sum()
         }
     }
 
@@ -160,10 +172,12 @@ pub mod instance {
     }
 }
 
+pub mod solver;
+
 pub fn get_random_permutation(size: usize) -> Vec<usize> {
     let mut numbers: Vec<usize> = (0..size).collect();
     let mut permuatation: Vec<usize> = vec![0; size];
-    for i in 0..size - 1  {
+    for i in 0..size - 1 {
         let index = rand::random::<usize>() % (size - i);
         permuatation[i] = numbers[index];
         numbers.swap_remove(index);
