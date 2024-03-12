@@ -103,3 +103,4 @@ pub fn dot_product_permuted_with_swap(
 }
 pub mod local_search;
 pub mod simulated_annealing;
+pub mod tabu_search;
