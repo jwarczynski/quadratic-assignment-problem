@@ -1,15 +1,41 @@
 use crate::instance::Instance;
-use std::io::Result;
 
-pub trait Solver {
-    fn solve(&self, instance: &Instance) -> Result<String>;
+use std::fmt;
+
+type Result<T> = std::result::Result<T, SolvingError>;
+
+#[derive(Debug)]
+pub struct SolvingError {
+    pub message: String,
+}
+
+impl fmt::Display for SolvingError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Error while solving: {}", self.message)
+    }
 }
 
 pub struct Solution {
-    pub value: f64,
-    pub solution: Vec<usize>,
+    pub permutation: Vec<usize>,
+    pub evaluations: usize,
+    pub solution_changes: usize,
 }
 
+pub trait Solver {
+    fn solve(&mut self, initial_solution: Vec<usize>) -> Result<Solution>;
+    fn get_name(&self) -> String;
+    fn get_instance(&self) -> &Instance;
+}
+
+// fn compute_cost(instance: &Instance, permutation: &[usize]) -> usize {
+//     instance
+//         .matrix_a
+//         .iter()
+//         .zip(permutation.iter().map(|&index| &instance.matrix_b[index]))
+//         .map(|(row_a, row_b)| dot_product_permuted(row_a, row_b, permutation))
+//         .sum()
+// }
+//
 pub fn move_to_neighbour(mut perm: Vec<usize>, neighbour_idx: usize) -> Vec<usize> {
     let n = perm.len();
     let (swap_index_0, swap_index_1) = calculate_swap_indices(n as isize, neighbour_idx as isize);
@@ -31,7 +57,7 @@ fn compute_num_neighbours(n: usize) -> usize {
     n * (n - 1) / 2
 }
 
-fn eval_diff(instance: &Instance, perm: &Vec<usize>, neighbour_idx: usize) -> i32 {
+fn eval_diff(instance: &Instance, perm: &[usize], neighbour_idx: usize) -> i32 {
     let n = perm.len();
     let (swap_index_0, swap_index_1) = calculate_swap_indices(n as isize, neighbour_idx as isize);
 
@@ -101,6 +127,9 @@ pub fn dot_product_permuted_with_swap(
     }
     sum
 }
+pub mod heuristic_solver;
 pub mod local_search;
+pub mod random_search;
+pub mod random_walk;
 pub mod simulated_annealing;
 pub mod tabu_search;

@@ -5,13 +5,39 @@ use rand::random;
 use super::compute_num_neighbours;
 use super::eval_diff;
 use super::move_to_neighbour;
+use super::Solution;
+use super::SolvingError;
 use crate::get_random_permutation;
 use crate::instance::Instance;
 
 const NUM_INITIAL_TEMPERATURE_SAMPLES: usize = 100;
 const MAX_NO_IMPROVEMENT_ITERAIONS: usize = 200_000;
 
-pub fn simulated_annealing(instance: &Instance, mut starting_solution: Vec<usize>) -> Vec<usize> {
+pub struct SimulatedAnnealingSolver<'a> {
+    instance: &'a Instance,
+}
+
+impl<'a> SimulatedAnnealingSolver<'a> {
+    pub fn new(instance: &Instance) -> SimulatedAnnealingSolver {
+        SimulatedAnnealingSolver { instance }
+    }
+}
+
+impl<'a> super::Solver for SimulatedAnnealingSolver<'a> {
+    fn solve(&mut self, starting_perm: Vec<usize>) -> Result<Solution, SolvingError> {
+        Ok(simulated_annealing(self.instance, starting_perm))
+    }
+
+    fn get_name(&self) -> String {
+        "Simulated Annealing".to_string()
+    }
+
+    fn get_instance(&self) -> &Instance {
+        self.instance
+    }
+}
+
+pub fn simulated_annealing(instance: &Instance, mut starting_solution: Vec<usize>) -> Solution {
     let mut temperature = set_initial_temperatrue(instance);
     let neighbours_num = compute_num_neighbours(instance.get_size());
     let iter_per_temperature = 1000;
@@ -37,7 +63,11 @@ pub fn simulated_annealing(instance: &Instance, mut starting_solution: Vec<usize
         temperature = update_temperature(temperature);
     }
 
-    starting_solution
+    Solution {
+        permutation: starting_solution,
+        evaluations: 0,
+        solution_changes: 0,
+    }
 }
 
 fn set_initial_temperatrue(instance: &Instance) -> f64 {
