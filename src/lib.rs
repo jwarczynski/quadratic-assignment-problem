@@ -178,6 +178,7 @@ pub mod instance {
         fn permutation_correct() {
             let sums_a = [2, 4, 5, 1];
             let sums_b = [1, 7, 2, 3];
+            todo!("add optimal cost to instance");
             let instance = Instance {
                 matrix_a: vec![
                     vec![1, 1, 0, 0],
@@ -192,6 +193,7 @@ pub mod instance {
                     vec![0, 1, 0, 0],
                 ],
                 size: 4,
+
             };
             let solver = Solver::new(&instance);
             let permutation = solver.greedy_mapping(&sums_a, &sums_b);
