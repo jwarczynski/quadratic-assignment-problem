@@ -1,22 +1,45 @@
 pub mod io;
 
 use instance::Instance;
-use rand;
+use solver::Solver;
 
-pub fn measure_time<F>(f: F, instance: &Instance, startting_perm: Vec<usize>) -> (u128, usize)
-where
-    F: Fn(&Instance, Vec<usize>) -> Vec<usize>,
-{
+pub struct Metrics {
+    pub duration: u128,
+    pub instance_name: String,
+    pub cost: usize,
+    pub evaluated_solutions: usize,
+    pub solution_changes: usize,
+    optimal_cost: usize,
+}
+
+pub fn measure_time(
+    solver: &mut dyn Solver,
+    _instance: &Instance,
+    startting_perm: Vec<usize>,
+    instance_name: &str,
+) -> Vec<Metrics> {
     let mut iteration: usize = 0;
     let mut total_elapsed = 0;
+    let mut total_cost = 0;
+    let mut metrics: Vec<Metrics> = Vec::new();
     while total_elapsed < 1 || iteration < 10 {
         let startting_perm = startting_perm.clone();
         let start = std::time::Instant::now();
-        f(instance, startting_perm);
+        let solution = solver.solve(startting_perm).expect("Failed to solve");
         total_elapsed += start.elapsed().as_nanos();
+        total_cost += solver.get_instance().evaluate(&solution.permutation);
         iteration += 1;
+
+        metrics.push(Metrics {
+            duration: total_elapsed,
+            instance_name: instance_name.to_string(),
+            cost: total_cost,
+            evaluated_solutions: solution.evaluations,
+            solution_changes: solution.solution_changes,
+            optimal_cost: solver.get_instance().optimal_cost,
+        });
     }
-    (total_elapsed, iteration)
+    metrics
 }
 
 pub mod instance {
@@ -28,15 +51,21 @@ pub mod instance {
         pub matrix_a: Vec<Vec<usize>>,
         pub matrix_b: Vec<Vec<usize>>,
         pub size: usize,
+        pub optimal_cost: usize,
     }
 
     impl Instance {
-        pub fn new(matrix_a: Vec<Vec<usize>>, matrix_b: Vec<Vec<usize>>) -> Instance {
+        pub fn new(
+            matrix_a: Vec<Vec<usize>>,
+            matrix_b: Vec<Vec<usize>>,
+            optimal_cost: usize,
+        ) -> Instance {
             let size = matrix_a.len();
             Instance {
                 matrix_a,
                 matrix_b,
                 size,
+                optimal_cost,
             }
         }
 

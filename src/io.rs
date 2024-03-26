@@ -1,6 +1,8 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error, ErrorKind};
+use crate::Metrics;
+
 use super::instance::Instance;
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Error, ErrorKind};
 
 pub struct InstanceReader<'a> {
     dir: &'a str,
@@ -15,14 +17,32 @@ impl<'q> InstanceReader<'q> {
     }
 
     pub fn read_instance(&self, filename: &str) -> std::io::Result<Instance> {
-        let file = File::open(format!("{}/{}", self.dir, filename))?;
-        let reader = BufReader::new(file);
-        let size: usize;
+        let instance_file = File::open(format!("{}/{}.dat", self.dir, filename))?;
+        let sln_file = File::open(format!("{}/{}.sln", self.dir, filename))?;
+        let instance_reader = BufReader::new(instance_file);
+        let sln_reader = BufReader::new(sln_file);
+        let (size, optimal_cost): (usize, usize);
 
-        let mut line_iter = reader.lines().peekable();
+        let mut sln_line_iter = sln_reader.lines().peekable();
 
-        if let Some(Ok(first_line)) = line_iter.next() {
-            size = first_line.trim().parse().unwrap()
+        if let Some(Ok(sln_first_line)) = sln_line_iter.next() {
+            let mut sln_values = sln_first_line.trim().split_whitespace();
+            if let Some(size_str) = sln_values.next() {
+                size = size_str.parse().unwrap_or_default();
+            } else {
+                return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
+            }
+            if let Some(optimal_cost_str) = sln_values.next() {
+                optimal_cost = optimal_cost_str.parse().unwrap_or_default();
+            } else {
+                return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
+            }
+        } else {
+            return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
+        }
+        let mut line_iter = instance_reader.lines().peekable();
+
+        if let Some(Ok(_first_line)) = line_iter.next() {
         } else {
             return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
         }
@@ -33,10 +53,13 @@ impl<'q> InstanceReader<'q> {
         self.skip_empty_lines(&mut line_iter);
         let matrix_b = self.read_matrix(size, &mut line_iter)?;
 
-        Ok(Instance::new(matrix_a, matrix_b))
+        Ok(Instance::new(matrix_a, matrix_b, optimal_cost))
     }
 
-    fn skip_empty_lines(&self, line_iter: &mut std::iter::Peekable<std::io::Lines<BufReader<File>>>) {
+    fn skip_empty_lines(
+        &self,
+        line_iter: &mut std::iter::Peekable<std::io::Lines<BufReader<File>>>,
+    ) {
         while let Some(Ok(line)) = line_iter.peek() {
             if line.trim().is_empty() {
                 line_iter.next();
@@ -68,6 +91,44 @@ impl<'q> InstanceReader<'q> {
         }
         Ok(matrix_a)
     }
+}
+
+pub fn save_metrics_to_csv(
+    filename: &str,
+    metrics: &[Metrics],
+) -> Result<(), Box<dyn std::error::Error>> {
+    let file = OpenOptions::new()
+        .append(true)
+        .create(true) // Create the file if it doesn't exist
+        .open(filename)?;
+    let mut writer = csv::Writer::from_writer(&file);
+
+    // If the file is newly created, write the header
+    if file.metadata()?.len() == 0 {
+        writer.write_record([
+            "Instance",
+            "Time",
+            "Cost",
+            "Evaluations",
+            "SlnChanges",
+            "OptimalCost",
+        ])?;
+    }
+
+    // Iterate over metrics and write each one to CSV
+    for metric in metrics {
+        writer.serialize((
+            &metric.instance_name,
+            metric.duration,
+            metric.cost,
+            metric.evaluated_solutions,
+            metric.solution_changes,
+            metric.optimal_cost,
+        ))?;
+    }
+
+    writer.flush()?;
+    Ok(())
 }
 
 #[cfg(test)]
