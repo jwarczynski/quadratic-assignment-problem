@@ -4,6 +4,8 @@ use super::instance::Instance;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Error, ErrorKind};
 
+pub mod experiments;
+
 pub struct InstanceReader<'a> {
     dir: &'a str,
     // reader: &'a mut dyn std::io::Read,
@@ -97,6 +99,11 @@ pub fn save_metrics_to_csv(
     filename: &str,
     metrics: &[Metrics],
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let folder_path = std::path::Path::new(filename)
+        .parent()
+        .ok_or("Invalid file path")?;
+    // Create the folder if it doesn't exist
+    std::fs::create_dir_all(folder_path)?;
     let file = OpenOptions::new()
         .append(true)
         .create(true) // Create the file if it doesn't exist
