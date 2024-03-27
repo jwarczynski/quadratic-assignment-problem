@@ -1,4 +1,6 @@
-use quadratic_assignment_problem::io::experiments::run_all_algorithms;
+use quadratic_assignment_problem::io::experiments::{
+    run_alg_with_time_constrains, run_all_algorithms, run_all_algorithms_with_time_constrains,
+};
 // use quadratic_assignment_problem::io::save_metrics_to_csv;
 // use quadratic_assignment_problem::measure_time;
 // use quadratic_assignment_problem::solver::random_search::RandomSearchSolver;
@@ -9,7 +11,8 @@ use quadratic_assignment_problem::io::experiments::run_all_algorithms;
 
 fn main() {
     let instances = ["chr12a", "chr15a", "chr18a", "chr20a", "chr22a", "chr25a"];
-    run_all_algorithms(&instances);
+    // run_all_algorithms(&instances);
+    run_all_algorithms_with_time_constrains();
 
     // for mut solver in solvers {
     // println!(
