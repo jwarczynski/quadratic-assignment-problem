@@ -119,7 +119,7 @@ pub fn save_metrics_to_csv(
             "Evaluations",
             "SlnChanges",
             "OptimalCost",
-            "InitilaCost",
+            "InitialCost",
         ])?;
     }
 
