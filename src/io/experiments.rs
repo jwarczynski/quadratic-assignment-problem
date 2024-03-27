@@ -81,6 +81,9 @@ pub fn run_all_algorithms_with_time_constrains() {
             "chr12a",
         );
 
-        let _ = save_metrics_to_csv("output/times2/steepst.csv", &metrics);
+        let _ = save_metrics_to_csv(
+            &format!("output/times2/{}.csv", steepst_solver.get_name()),
+            &metrics,
+        );
     }
 }
