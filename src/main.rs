@@ -8,9 +8,6 @@ use quadratic_assignment_problem::{get_random_permutation, io::InstanceReader};
 
 fn main() {
     let instance_reader = InstanceReader::new("qap/instances");
-    let instance = instance_reader
-        .read_instance("chr12a")
-        .expect("Failed to read instance file");
 
     let instances = ["chr12a", "chr15a", "chr18a", "chr20a", "chr22a", "chr25a"];
 
@@ -21,11 +18,11 @@ fn main() {
             .expect("Failed to read instance file");
 
         let perm = get_random_permutation(instance.size);
-        println!("starting perm: {:?}", perm);
+        println!("{:?}:\tstarting perm: {:?}", instance_name, perm);
 
         let mut solvers: Vec<Box<dyn Solver>> = vec![
             Box::new(RandomSearchSolver::new(&instance, 10_000)),
-            Box::new(RandomWalkSolver::new(&instance, 1_000_000)),
+            Box::new(RandomWalkSolver::new(&instance, 10_000)),
             Box::new(heuristic_solver::HeuristicSolver::new(&instance)),
             Box::new(local_search::greedy::GreedySolver::new(&instance)),
             Box::new(local_search::steepest::SteepesSolver::new(&instance)),
@@ -33,6 +30,7 @@ fn main() {
         ];
 
         solvers.iter_mut().for_each(|solver| {
+            println!("{:?}", solver.get_name());
             let metrics = measure_time(&mut **solver, &instance, perm.clone(), instance_name);
             let _ = save_metrics_to_csv(&format!("output/{}.csv", solver.get_name()), &metrics);
         });

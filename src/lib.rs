@@ -10,14 +10,17 @@ pub struct Metrics {
     pub evaluated_solutions: usize,
     pub solution_changes: usize,
     optimal_cost: usize,
+    initial_cost: usize,
 }
 
 pub fn measure_time(
     solver: &mut dyn Solver,
-    _instance: &Instance,
+    instance: &Instance,
     startting_perm: Vec<usize>,
     instance_name: &str,
 ) -> Vec<Metrics> {
+    let initial_cost = instance.evaluate(startting_perm.as_ref());
+
     let mut iteration: usize = 0;
     let mut total_elapsed = 0;
     let mut total_cost = 0;
@@ -37,6 +40,7 @@ pub fn measure_time(
             evaluated_solutions: solution.evaluations,
             solution_changes: solution.solution_changes,
             optimal_cost: solver.get_instance().optimal_cost,
+            initial_cost,
         });
     }
     metrics
@@ -193,7 +197,6 @@ pub mod instance {
                     vec![0, 1, 0, 0],
                 ],
                 size: 4,
-
             };
             let solver = Solver::new(&instance);
             let permutation = solver.greedy_mapping(&sums_a, &sums_b);

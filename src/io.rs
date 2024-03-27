@@ -112,6 +112,7 @@ pub fn save_metrics_to_csv(
             "Evaluations",
             "SlnChanges",
             "OptimalCost",
+            "InitilaCost",
         ])?;
     }
 
@@ -124,6 +125,7 @@ pub fn save_metrics_to_csv(
             metric.evaluated_solutions,
             metric.solution_changes,
             metric.optimal_cost,
+            metric.initial_cost,
         ))?;
     }
 
