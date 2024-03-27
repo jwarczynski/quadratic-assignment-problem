@@ -7,14 +7,16 @@ use super::{compute_num_neighbours, eval_diff, move_to_neighbour, Solution, Solv
 pub struct RandomWalkSolver<'a> {
     instance: &'a Instance,
     max_iterations: usize,
+    max_time: u128,
     best_solution: Vec<usize>,
 }
 
 impl<'a> RandomWalkSolver<'a> {
-    pub fn new(instance: &Instance, max_iterations: usize) -> RandomWalkSolver {
+    pub fn new(instance: &Instance, max_iterations: usize, max_time: u128) -> RandomWalkSolver {
         RandomWalkSolver {
             instance,
             max_iterations,
+            max_time,
             best_solution: Vec::with_capacity(instance.size),
         }
     }
@@ -25,7 +27,10 @@ impl<'a> Solver for RandomWalkSolver<'a> {
         let num_neighbours = compute_num_neighbours(self.instance.size);
         let mut evaluations = 0;
         let mut solution_changes = 0;
-        for _ in 0..self.max_iterations {
+        let mut iteration = 0;
+        let start = std::time::Instant::now();
+
+        while iteration < self.max_iterations && start.elapsed().as_nanos() < self.max_time {
             let random_neighbour_idx = random::<usize>() % num_neighbours;
             let diff = eval_diff(self.instance, &initial_solution, random_neighbour_idx);
             initial_solution = move_to_neighbour(initial_solution, random_neighbour_idx);
@@ -35,6 +40,7 @@ impl<'a> Solver for RandomWalkSolver<'a> {
                 self.best_solution = initial_solution.clone();
                 solution_changes += 1;
             }
+            iteration += 1;
         }
         Ok(Solution {
             permutation: self.best_solution.clone(),

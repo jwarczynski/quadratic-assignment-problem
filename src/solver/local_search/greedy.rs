@@ -8,11 +8,12 @@ use crate::{
 
 pub struct GreedySolver<'a> {
     instance: &'a Instance,
+    max_time: u128,
 }
 
 impl<'a> GreedySolver<'a> {
-    pub fn new(instance: &Instance) -> GreedySolver {
-        GreedySolver { instance }
+    pub fn new(instance: &Instance, max_time: u128) -> GreedySolver {
+        GreedySolver { instance, max_time }
     }
 }
 
@@ -22,6 +23,7 @@ impl<'a> Solver for GreedySolver<'a> {
 
         let mut solutions_evaluated = 0;
         let mut solutions_changes = 0;
+        let start = std::time::Instant::now();
 
         loop {
             let mut found_improvement = false;
@@ -38,7 +40,7 @@ impl<'a> Solver for GreedySolver<'a> {
                 }
             }
 
-            if !found_improvement {
+            if !found_improvement || start.elapsed().as_nanos() > self.max_time {
                 break;
             }
 

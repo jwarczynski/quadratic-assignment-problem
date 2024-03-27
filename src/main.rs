@@ -21,11 +21,17 @@ fn main() {
         println!("{:?}:\tstarting perm: {:?}", instance_name, perm);
 
         let mut solvers: Vec<Box<dyn Solver>> = vec![
-            Box::new(RandomSearchSolver::new(&instance, 10_000)),
-            Box::new(RandomWalkSolver::new(&instance, 10_000)),
+            Box::new(RandomSearchSolver::new(&instance, 10_000, 150_000_000)),
+            Box::new(RandomWalkSolver::new(&instance, 10_000, 150_000_000)),
             Box::new(heuristic_solver::HeuristicSolver::new(&instance)),
-            Box::new(local_search::greedy::GreedySolver::new(&instance)),
-            Box::new(local_search::steepest::SteepesSolver::new(&instance)),
+            Box::new(local_search::greedy::GreedySolver::new(
+                &instance,
+                150_000_000,
+            )),
+            Box::new(local_search::steepest::SteepesSolver::new(
+                &instance,
+                150_000_000,
+            )),
             // Box::new(SimulatedAnnealingSolver::new(&instance)),
         ];
 

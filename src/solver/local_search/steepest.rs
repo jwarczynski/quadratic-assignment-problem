@@ -7,11 +7,12 @@ use crate::{
 
 pub struct SteepesSolver<'a> {
     instance: &'a Instance,
+    max_time: u128,
 }
 
 impl<'a> SteepesSolver<'a> {
-    pub fn new(instance: &Instance) -> SteepesSolver {
-        SteepesSolver { instance }
+    pub fn new(instance: &Instance, max_time: u128) -> SteepesSolver {
+        SteepesSolver { instance, max_time }
     }
 }
 
@@ -24,6 +25,7 @@ impl<'a> Solver for SteepesSolver<'a> {
         let mut best_neighbours_num = 0;
         let mut best_neighbours = vec![0; num_neighbours];
         let mut best_neighbour_diff = 0;
+        let start = std::time::Instant::now();
 
         loop {
             for neighbour_idx in 0..num_neighbours {
@@ -41,7 +43,7 @@ impl<'a> Solver for SteepesSolver<'a> {
                 }
             }
 
-            if best_neighbours_num == 0 {
+            if best_neighbours_num == 0 || start.elapsed().as_nanos() > self.max_time {
                 break;
             }
 
