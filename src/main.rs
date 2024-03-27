@@ -1,47 +1,17 @@
-use quadratic_assignment_problem::io::save_metrics_to_csv;
-use quadratic_assignment_problem::measure_time;
-use quadratic_assignment_problem::solver::random_search::RandomSearchSolver;
-use quadratic_assignment_problem::solver::random_walk::RandomWalkSolver;
-use quadratic_assignment_problem::solver::simulated_annealing::SimulatedAnnealingSolver;
-use quadratic_assignment_problem::solver::{heuristic_solver, local_search, Solver};
-use quadratic_assignment_problem::{get_random_permutation, io::InstanceReader};
+use quadratic_assignment_problem::io::experiments::run_all_algorithms;
+// use quadratic_assignment_problem::io::save_metrics_to_csv;
+// use quadratic_assignment_problem::measure_time;
+// use quadratic_assignment_problem::solver::random_search::RandomSearchSolver;
+// use quadratic_assignment_problem::solver::random_walk::RandomWalkSolver;
+// use quadratic_assignment_problem::solver::simulated_annealing::SimulatedAnnealingSolver;
+// use quadratic_assignment_problem::solver::{heuristic_solver, local_search, Solver};
+// use quadratic_assignment_problem::{get_random_permutation, io::InstanceReader};
 
 fn main() {
-    let instance_reader = InstanceReader::new("qap/instances");
-
     let instances = ["chr12a", "chr15a", "chr18a", "chr20a", "chr22a", "chr25a"];
+    run_all_algorithms(&instances);
 
     // for mut solver in solvers {
-    instances.iter().for_each(|instance_name| {
-        let instance = instance_reader
-            .read_instance(instance_name)
-            .expect("Failed to read instance file");
-
-        let perm = get_random_permutation(instance.size);
-        println!("{:?}:\tstarting perm: {:?}", instance_name, perm);
-
-        let mut solvers: Vec<Box<dyn Solver>> = vec![
-            Box::new(RandomSearchSolver::new(&instance, 10_000, 150_000_000)),
-            Box::new(RandomWalkSolver::new(&instance, 10_000, 150_000_000)),
-            Box::new(heuristic_solver::HeuristicSolver::new(&instance)),
-            Box::new(local_search::greedy::GreedySolver::new(
-                &instance,
-                150_000_000,
-            )),
-            Box::new(local_search::steepest::SteepesSolver::new(
-                &instance,
-                150_000_000,
-            )),
-            // Box::new(SimulatedAnnealingSolver::new(&instance)),
-        ];
-
-        solvers.iter_mut().for_each(|solver| {
-            println!("{:?}", solver.get_name());
-            let metrics = measure_time(&mut **solver, &instance, perm.clone(), instance_name);
-            let _ = save_metrics_to_csv(&format!("output/{}.csv", solver.get_name()), &metrics);
-        });
-    });
-
     // println!(
     //     "{:?}:\ttotal time: {:?}\t avg time: {:?}\t avg cost: {:?}\t iterations: {:?}",
     //     solver.get_name(),
