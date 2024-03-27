@@ -50,4 +50,8 @@ impl<'a> Solver for RandomSearchSolver<'a> {
     fn get_instance(&self) -> &Instance {
         self.instance
     }
+
+    fn set_time_limit(&mut self, time_limit: u128) {
+        self.max_time = time_limit;
+    }
 }

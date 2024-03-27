@@ -49,4 +49,6 @@ impl<'a> Solver for HeuristicSolver<'a> {
     fn get_instance(&self) -> &Instance {
         self.instance
     }
+
+    fn set_time_limit(&mut self, time_limit: u128) {}
 }

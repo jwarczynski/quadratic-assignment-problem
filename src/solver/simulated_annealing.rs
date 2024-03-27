@@ -15,11 +15,12 @@ const MAX_NO_IMPROVEMENT_ITERAIONS: usize = 200_000;
 
 pub struct SimulatedAnnealingSolver<'a> {
     instance: &'a Instance,
+    max_time: u128,
 }
 
 impl<'a> SimulatedAnnealingSolver<'a> {
-    pub fn new(instance: &Instance) -> SimulatedAnnealingSolver {
-        SimulatedAnnealingSolver { instance }
+    pub fn new(instance: &Instance, max_time: u128) -> SimulatedAnnealingSolver {
+        SimulatedAnnealingSolver { instance, max_time }
     }
 }
 
@@ -34,6 +35,10 @@ impl<'a> super::Solver for SimulatedAnnealingSolver<'a> {
 
     fn get_instance(&self) -> &Instance {
         self.instance
+    }
+
+    fn set_time_limit(&mut self, time_limit: u128) {
+        self.max_time = time_limit;
     }
 }
 
