@@ -33,7 +33,7 @@ impl<'a> Solver for GreedySolver<'a> {
                 let diff = eval_diff(self.instance, &starting_perm, neighbour_idx);
                 solutions_evaluated += 1;
 
-                if diff > 0 {
+                if diff > 0 || start.elapsed().as_nanos() > self.max_time{
                     best_neighbour_idx = neighbour_idx;
                     found_improvement = true;
                     break;
@@ -65,5 +65,9 @@ impl<'a> Solver for GreedySolver<'a> {
 
     fn set_time_limit(&mut self, time_limit: u128) {
         self.max_time = time_limit;
+    }
+
+    fn get_time_limit(&self) -> u128 {
+        self.max_time
     }
 }

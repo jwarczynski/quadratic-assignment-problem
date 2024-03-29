@@ -51,4 +51,8 @@ impl<'a> Solver for HeuristicSolver<'a> {
     }
 
     fn set_time_limit(&mut self, time_limit: u128) {}
+
+    fn get_time_limit(&self) -> u128 {
+        0
+    }
 }

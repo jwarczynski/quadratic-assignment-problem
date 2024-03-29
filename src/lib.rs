@@ -11,36 +11,39 @@ pub struct Metrics {
     pub solution_changes: usize,
     optimal_cost: usize,
     initial_cost: usize,
+    time_limit: u128,
 }
 
 pub fn measure_time(
     solver: &mut dyn Solver,
     instance: &Instance,
-    startting_perm: Vec<usize>,
     instance_name: &str,
+    min_runs: i32,
 ) -> Vec<Metrics> {
-    let initial_cost = instance.evaluate(startting_perm.as_ref());
-
     let mut iteration: usize = 0;
     let mut total_elapsed = 0;
     let mut total_cost = 0;
     let mut metrics: Vec<Metrics> = Vec::new();
-    while total_elapsed < 1 || iteration < 10 {
-        let startting_perm = startting_perm.clone();
+    while total_elapsed < 1 || iteration < min_runs as usize {
+        let starting_perm = get_random_permutation(instance.get_size());
+        let initial_cost = instance.evaluate(starting_perm.as_ref());
         let start = std::time::Instant::now();
-        let solution = solver.solve(startting_perm).expect("Failed to solve");
-        total_elapsed += start.elapsed().as_nanos();
-        total_cost += solver.get_instance().evaluate(&solution.permutation);
+        let solution = solver.solve(starting_perm).expect("Failed to solve");
+        let elapsed = start.elapsed().as_nanos();
+        total_elapsed += elapsed;
+        let cost = solver.get_instance().evaluate(&solution.permutation);
+        total_cost += cost;
         iteration += 1;
 
         metrics.push(Metrics {
-            duration: total_elapsed,
+            duration: elapsed,
             instance_name: instance_name.to_string(),
-            cost: total_cost,
+            cost,
             evaluated_solutions: solution.evaluations,
             solution_changes: solution.solution_changes,
             optimal_cost: solver.get_instance().optimal_cost,
             initial_cost,
+            time_limit: solver.get_time_limit(),
         });
     }
     metrics
@@ -197,6 +200,7 @@ pub mod instance {
                     vec![0, 1, 0, 0],
                 ],
                 size: 4,
+                optimal_cost: 0,
             };
             let solver = Solver::new(&instance);
             let permutation = solver.greedy_mapping(&sums_a, &sums_b);

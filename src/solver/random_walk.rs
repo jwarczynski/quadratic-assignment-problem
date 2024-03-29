@@ -30,8 +30,10 @@ impl<'a> Solver for RandomWalkSolver<'a> {
         let mut iteration = 0;
         let start = std::time::Instant::now();
 
-        while iteration < self.max_iterations && start.elapsed().as_nanos() < self.max_time {
+        // while iteration < self.max_iterations && start.elapsed().as_nanos() < self.max_time {
+        while iteration < self.max_iterations {
             let random_neighbour_idx = random::<usize>() % num_neighbours;
+            println!("Random neighbour idx: {}", random_neighbour_idx);
             let diff = eval_diff(self.instance, &initial_solution, random_neighbour_idx);
             initial_solution = move_to_neighbour(initial_solution, random_neighbour_idx);
             evaluations += 1;
@@ -58,6 +60,10 @@ impl<'a> Solver for RandomWalkSolver<'a> {
 
     fn set_time_limit(&mut self, time_limit: u128) {
         self.max_time = time_limit;
+    }
+
+    fn get_time_limit(&self) -> u128 {
+        self.max_time
     }
 }
 

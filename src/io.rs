@@ -1,4 +1,4 @@
-use crate::Metrics;
+use crate::{io, Metrics};
 
 use super::instance::Instance;
 use std::fs::{File, OpenOptions};
@@ -77,17 +77,21 @@ impl<'q> InstanceReader<'q> {
         line_iter: &mut std::iter::Peekable<std::io::Lines<BufReader<File>>>,
     ) -> std::io::Result<Vec<Vec<usize>>> {
         let mut matrix_a: Vec<Vec<usize>> = Vec::with_capacity(size);
-        for _ in 0..size {
+        let mut total_numbers_read = 0;
+        while total_numbers_read < size * size {
             let mut row = Vec::with_capacity(size);
-            if let Some(Ok(line)) = line_iter.next() {
-                let distances: Vec<usize> = line
-                    .trim()
-                    .split_whitespace()
-                    .map(|num_str| num_str.parse().unwrap())
-                    .collect();
-                row.extend_from_slice(&distances);
-            } else {
-                return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
+            while row.len() < size {
+                if let Some(Ok(line)) = line_iter.next() {
+                    let numbers_in_line: Vec<usize> = line
+                        .trim()
+                        .split_whitespace()
+                        .map(|num_str| num_str.parse().unwrap())
+                        .collect();
+                    row.extend_from_slice(&numbers_in_line);
+                    total_numbers_read += numbers_in_line.len();
+                } else {
+                    return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
+                }
             }
             matrix_a.push(row);
         }
@@ -120,6 +124,7 @@ pub fn save_metrics_to_csv(
             "SlnChanges",
             "OptimalCost",
             "InitialCost",
+            "TimeLimit",
         ])?;
     }
 
@@ -133,6 +138,7 @@ pub fn save_metrics_to_csv(
             metric.solution_changes,
             metric.optimal_cost,
             metric.initial_cost,
+            metric.time_limit,
         ))?;
     }
 

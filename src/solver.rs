@@ -26,6 +26,7 @@ pub trait Solver {
     fn get_name(&self) -> String;
     fn get_instance(&self) -> &Instance;
     fn set_time_limit(&mut self, time_limit: u128);
+    fn get_time_limit(&self) -> u128;
 }
 
 // fn compute_cost(instance: &Instance, permutation: &[usize]) -> usize {

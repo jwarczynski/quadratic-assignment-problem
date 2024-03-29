@@ -40,6 +40,10 @@ impl<'a> super::Solver for SimulatedAnnealingSolver<'a> {
     fn set_time_limit(&mut self, time_limit: u128) {
         self.max_time = time_limit;
     }
+
+    fn get_time_limit(&self) -> u128 {
+        self.max_time
+    }
 }
 
 pub fn simulated_annealing(instance: &Instance, mut starting_solution: Vec<usize>) -> Solution {
