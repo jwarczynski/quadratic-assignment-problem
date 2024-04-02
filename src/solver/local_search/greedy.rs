@@ -33,7 +33,7 @@ impl<'a> Solver for GreedySolver<'a> {
                 let diff = eval_diff(self.instance, &starting_perm, neighbour_idx);
                 solutions_evaluated += 1;
 
-                if diff > 0 || start.elapsed().as_nanos() > self.max_time{
+                if diff > 0 || start.elapsed().as_nanos() > self.max_time {
                     best_neighbour_idx = neighbour_idx;
                     found_improvement = true;
                     break;

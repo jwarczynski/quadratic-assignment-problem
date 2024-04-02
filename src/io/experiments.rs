@@ -1,3 +1,4 @@
+use std::usize;
 use crate::{
     get_random_permutation,
     io::{save_metrics_to_csv, InstanceReader},
@@ -9,26 +10,39 @@ use crate::{
 };
 use crate::instance::Instance;
 
-pub fn run_all_algorithms(instances: &[&str], out_dir: &str) {
-    // for mut solver in solvers {
+pub fn initial_quality_experiment(instances: &[&str], out_dir: &str, runs: usize) {
     let instance_reader = InstanceReader::new("qap/instances");
-    instances.iter().for_each(|instance_name| {
+    for instance_name in instances {
         let instance = instance_reader
             .read_instance(instance_name)
             .expect("Failed to read instance file");
 
-        let perm = get_random_permutation(instance.size);
-        println!("{:?}:\tstarting perm: {:?}", instance_name, perm);
-
-        let mut solvers: Vec<Box<dyn Solver>> = get_all_solvers(&instance, 2_500_000);
-
+        let mut solvers: Vec<Box<dyn Solver>> = get_local_search_solvers(&instance, u128::MAX);
         solvers.iter_mut().for_each(|solver| {
             println!("{:?}", solver.get_name());
+            let metrics = measure_time(&mut **solver, &instance, instance_name, runs);
+            let _ =
+                save_metrics_to_csv(&format!("output/{}/{}.csv", out_dir, solver.get_name()), &metrics);
+        });
+    }
+}
+
+pub fn run_all_algorithms(instances: &[&str], out_dir: &str, limits: &[u128]) {
+    let instance_reader = InstanceReader::new("qap/instances");
+    for (i, instance_name) in instances.iter().enumerate() {
+        let instance = instance_reader
+            .read_instance(instance_name)
+            .expect("Failed to read instance file");
+
+        let mut solvers: Vec<Box<dyn Solver>> = get_all_solvers(&instance, u128::MAX);
+        solvers.iter_mut().for_each(|solver| {
+            println!("{:?}", solver.get_name());
+            solver.set_time_limit(limits[i]);
             let metrics = measure_time(&mut **solver, &instance, instance_name, 10);
             let _ =
                 save_metrics_to_csv(&format!("output/{}/{}.csv", out_dir, solver.get_name()), &metrics);
         });
-    });
+    };
 }
 
 pub fn run_alg_with_time_constrains(solver_name: &str, instance_name: &str, time_limits: &[u128]) {
@@ -39,9 +53,6 @@ pub fn run_alg_with_time_constrains(solver_name: &str, instance_name: &str, time
 
     let mut solvers = get_all_solvers(&instance, 2_500_000);
     let mut solver = solvers.iter_mut().find(|s| s.get_name() == solver_name).expect("Solver not found");
-
-    let perm = get_random_permutation(instance.size);
-    println!("{:?}:\t starting perm: {:?}", instance_name, perm);
 
     time_limits.iter().for_each(|limit| {
         solver.set_time_limit(*limit);
@@ -55,8 +66,8 @@ pub fn run_alg_with_time_constrains(solver_name: &str, instance_name: &str, time
 
 fn get_all_solvers<'i>(instance: &'i Instance, max_time: u128) -> Vec<Box<dyn Solver + 'i>> {
     let mut solvers: Vec<Box<dyn Solver>> = vec![
-        Box::new(RandomSearchSolver::new(&instance, 10_000, max_time)),
-        Box::new(RandomWalkSolver::new(&instance, 10_000, max_time)),
+        Box::new(RandomSearchSolver::new(&instance, usize::MAX, max_time)),
+        Box::new(RandomWalkSolver::new(&instance, usize::MAX, max_time)),
         Box::new(heuristic_solver::HeuristicSolver::new(&instance)),
         Box::new(local_search::greedy::GreedySolver::new(
             &instance,
@@ -68,6 +79,13 @@ fn get_all_solvers<'i>(instance: &'i Instance, max_time: u128) -> Vec<Box<dyn So
         )),
     ];
     solvers
+}
+
+pub fn get_local_search_solvers<'i>(instance: &'i Instance, max_time: u128) -> Vec<Box<dyn Solver + 'i>> {
+    vec![
+        Box::new(local_search::greedy::GreedySolver::new(&instance, max_time)),
+        Box::new(local_search::steepest::SteepestSolver::new(&instance, max_time)),
+    ]
 }
 
 pub fn run_all_algorithms_with_time_constrains() {

@@ -38,7 +38,7 @@ impl<'a> Solver for RandomSearchSolver<'a> {
         }
         Ok(Solution {
             permutation: best_permutation,
-            evaluations: self.max_iterations,
+            evaluations: iteration,
             solution_changes,
         })
     }

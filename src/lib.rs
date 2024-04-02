@@ -9,16 +9,17 @@ pub struct Metrics {
     pub cost: usize,
     pub evaluated_solutions: usize,
     pub solution_changes: usize,
-    optimal_cost: usize,
-    initial_cost: usize,
-    time_limit: u128,
+    pub optimal_cost: usize,
+    pub initial_cost: usize,
+    pub time_limit: u128,
+    pub solution_distance: usize,
 }
 
 pub fn measure_time(
     solver: &mut dyn Solver,
     instance: &Instance,
     instance_name: &str,
-    min_runs: i32,
+    min_runs: usize,
 ) -> Vec<Metrics> {
     let mut iteration: usize = 0;
     let mut total_elapsed = 0;
@@ -44,6 +45,7 @@ pub fn measure_time(
             optimal_cost: solver.get_instance().optimal_cost,
             initial_cost,
             time_limit: solver.get_time_limit(),
+            solution_distance: instance.get_solutions_distance(&solution.permutation),
         });
     }
     metrics
@@ -59,6 +61,7 @@ pub mod instance {
         pub matrix_b: Vec<Vec<usize>>,
         pub size: usize,
         pub optimal_cost: usize,
+        pub optimal_permutation: Vec<usize>,
     }
 
     impl Instance {
@@ -66,6 +69,7 @@ pub mod instance {
             matrix_a: Vec<Vec<usize>>,
             matrix_b: Vec<Vec<usize>>,
             optimal_cost: usize,
+            optimal_permutation: Vec<usize>,
         ) -> Instance {
             let size = matrix_a.len();
             Instance {
@@ -73,7 +77,16 @@ pub mod instance {
                 matrix_b,
                 size,
                 optimal_cost,
+                optimal_permutation,
             }
+        }
+
+        pub fn get_solutions_distance(&self, perm: &Vec<usize>) -> usize {
+            self.optimal_permutation
+                .iter().zip(perm.iter())
+                .map(|(p1,p2)| p2 != p1)
+                .filter(|&x| x)
+                .count()
         }
 
         pub fn get_matrix_a(&self) -> &Vec<Vec<usize>> {

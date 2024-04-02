@@ -1,61 +1,98 @@
+use std::error::Error;
 use crate::{io, Metrics};
 
 use super::instance::Instance;
 use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, Error, ErrorKind};
+use std::io::{BufRead, BufReader, ErrorKind};
 
 pub mod experiments;
 
 pub struct InstanceReader<'a> {
     dir: &'a str,
-    // reader: &'a mut dyn std::io::Read,
 }
 
 impl<'q> InstanceReader<'q> {
     pub fn new(dir: &'q str) -> Self {
-        // let reader = std::io::BufReader::new(dir);
         InstanceReader { dir }
-        // InstanceReader { dir, reader }
     }
 
     pub fn read_instance(&self, filename: &str) -> std::io::Result<Instance> {
+        let (_size, optimal_cost, optimal_perm) = self.read_optimal_solution(filename).unwrap();
+        let (matrix_a, matrix_b) = self.read_instance_dat_file(filename).unwrap();
+
+        Ok(Instance::new(matrix_a, matrix_b, optimal_cost, optimal_perm))
+    }
+
+    pub fn read_instance_dat_file(&self, filename: &str) -> std::io::Result<(Vec<Vec<usize>>, Vec<Vec<usize>>)> {
         let instance_file = File::open(format!("{}/{}.dat", self.dir, filename))?;
-        let sln_file = File::open(format!("{}/{}.sln", self.dir, filename))?;
         let instance_reader = BufReader::new(instance_file);
-        let sln_reader = BufReader::new(sln_file);
-        let (size, optimal_cost): (usize, usize);
-
-        let mut sln_line_iter = sln_reader.lines().peekable();
-
-        if let Some(Ok(sln_first_line)) = sln_line_iter.next() {
-            let mut sln_values = sln_first_line.trim().split_whitespace();
-            if let Some(size_str) = sln_values.next() {
-                size = size_str.parse().unwrap_or_default();
-            } else {
-                return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
-            }
-            if let Some(optimal_cost_str) = sln_values.next() {
-                optimal_cost = optimal_cost_str.parse().unwrap_or_default();
-            } else {
-                return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
-            }
-        } else {
-            return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
-        }
         let mut line_iter = instance_reader.lines().peekable();
+        let matrix_size: usize;
 
-        if let Some(Ok(_first_line)) = line_iter.next() {
-        } else {
-            return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
+        loop {
+            if let Some(Ok(line)) = line_iter.next() {
+                if line.is_empty() {
+                    continue;
+                }
+                matrix_size = line.trim().parse().expect("First number should be matrix size");
+                break;
+            }
         }
 
         self.skip_empty_lines(&mut line_iter);
-        let matrix_a = self.read_matrix(size, &mut line_iter)?;
+        let matrix_a = self.read_matrix(matrix_size, &mut line_iter)?;
 
         self.skip_empty_lines(&mut line_iter);
-        let matrix_b = self.read_matrix(size, &mut line_iter)?;
+        let matrix_b = self.read_matrix(matrix_size, &mut line_iter)?;
 
-        Ok(Instance::new(matrix_a, matrix_b, optimal_cost))
+        Ok((matrix_a, matrix_b))
+    }
+
+    pub fn read_optimal_solution(&self, filename: &str) -> std::io::Result<(usize, usize, Vec<usize>)> {
+        let file = File::open(format!("{}/{}.sln", self.dir, filename))?;
+        let reader = BufReader::new(file);
+        let mut iterator = reader.lines().peekable();
+        let mut size_and_cost_read = false;
+        let (mut size, mut cost): (usize, usize) = (0, 0);
+        let mut perm_elements_read = 0;
+
+
+        while !size_and_cost_read {
+            if let (Some(Ok(line))) = iterator.next() {
+                if !line.is_empty() {
+                    let mut numbers_iter = line.trim().split_whitespace();
+                    size = numbers_iter.next()
+                        .ok_or(ErrorKind::UnexpectedEof)?
+                        .parse::<usize>()
+                        .map_err(|_| io::ErrorKind::InvalidData)?;
+
+                    cost = numbers_iter.next()
+                        .ok_or(ErrorKind::UnexpectedEof)?
+                        .parse::<usize>()
+                        .map_err(|_| io::ErrorKind::UnexpectedEof)?;
+                    size_and_cost_read = true;
+                }
+            } else {
+                return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Empty file"));
+            }
+        }
+
+        let mut optimal_perm: Vec<usize> = Vec::with_capacity(size);
+        while perm_elements_read < size {
+            let Some(Ok(line)) = iterator.next() else {continue};
+            if !line.is_empty() {
+                let elements: Vec<usize> = line
+                    .trim()
+                    .split_whitespace()
+                    .map(|n| (n.parse::<isize>().unwrap() - 1) as usize)
+                    .collect();
+
+                optimal_perm.extend_from_slice(&elements);
+                perm_elements_read += elements.len();
+            } else {}
+        }
+
+        Ok((size, cost, optimal_perm))
     }
 
     fn skip_empty_lines(
@@ -90,7 +127,7 @@ impl<'q> InstanceReader<'q> {
                     row.extend_from_slice(&numbers_in_line);
                     total_numbers_read += numbers_in_line.len();
                 } else {
-                    return Err(Error::new(ErrorKind::InvalidData, "Invalid file format"));
+                    return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Empty file"));
                 }
             }
             matrix_a.push(row);
@@ -125,6 +162,7 @@ pub fn save_metrics_to_csv(
             "OptimalCost",
             "InitialCost",
             "TimeLimit",
+            "SlnDistance",
         ])?;
     }
 
@@ -139,6 +177,7 @@ pub fn save_metrics_to_csv(
             metric.optimal_cost,
             metric.initial_cost,
             metric.time_limit,
+            metric.solution_distance,
         ))?;
     }
 

@@ -1,6 +1,5 @@
-use quadratic_assignment_problem::io::experiments::{
-    run_alg_with_time_constrains, run_all_algorithms, run_all_algorithms_with_time_constrains,
-};
+use std::io::BufRead;
+use quadratic_assignment_problem::io::experiments::{initial_quality_experiment, run_alg_with_time_constrains, run_all_algorithms, run_all_algorithms_with_time_constrains};
 use quadratic_assignment_problem::io::save_metrics_to_csv;
 // use quadratic_assignment_problem::measure_time;
 // use quadratic_assignment_problem::solver::random_search::RandomSearchSolver;
@@ -13,22 +12,26 @@ use quadratic_assignment_problem::solver::local_search::steepest::SteepestSolver
 use quadratic_assignment_problem::solver::random_walk::RandomWalkSolver;
 
 fn main() {
-    let instances = ["chr12a", "chr15a", "chr18a", "chr20a", "chr22a", "chr25a"];
-    let instances = ["lipa20a", "lipa30a", "lipa40a", "lipa50a", "lipa60a", "lipa70a", "lipa80a", "lipa90a"];
+    let chr_instances = ["chr12a", "chr15a", "chr18a", "chr20a", "chr22a", "chr25a"];
+    let chr_limits = vec![2_500_000; chr_instances.len()];
+    let lipa_instances = ["lipa20a", "lipa30a", "lipa40a", "lipa50a", "lipa60a", "lipa70a", "lipa80a", "lipa90a"];
+    let lipa_limits = [1e6 as u128, 50e7 as u128, 1e8 as u128, 2e8 as u128, 5e8 as u128, 7.5e8 as u128, 1.2e9 as u128, 2e9 as u128];
 
-    let instance_reader = InstanceReader::new("qap/instances");
-    let instance = instance_reader
-        .read_instance(instances[0])
-        .expect("Failed to read instance file");
-
-    println!("{:?}", instance.matrix_a[0].len());
-
-    let file = std::fs::File::open("qap/instances/lipa30a.dat").expect("Failed to open file");
-    let reader = std::io::BufReader::new(file);
-
-    let mut solver = RandomWalkSolver::new(&instance, 10_000, 2_000_000);
     // let solution = solver.solve(get_random_permutation(instance.size)).unwrap();
-    // run_all_algorithms(&instances, "lipa");
+    // let instance_reader = InstanceReader::new("qap/instances");
+    // let instance = instance_reader
+    //     .read_instance(instances[1])
+    //     .expect("Failed to read instance file");
+
+    // assert_eq!(instance.evaluate(instance.optimal_permutation.as_ref()), instance.optimal_cost);
+
+    // let content = instance_reader.read_optimal_solution(instances[1]).unwrap();
+
+    run_all_algorithms(&chr_instances, "chr2", &chr_limits);
+
+    // let initial_quality_instances = ["chr12a", "chr20a", "lipa20a"];
+    // let repetition_experiment_instances = ["tai12b", "tai100b"];
+    // initial_quality_experiment(&repetition_experiment_instances, "repetition", 300);
 
     // let mut limits: Vec<u128> = Vec::new();
     // for exp in 4..=10 {

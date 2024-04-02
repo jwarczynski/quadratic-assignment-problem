@@ -46,6 +46,7 @@ impl<'a> Solver for SteepestSolver<'a> {
                     }
                     _ => {}
                 }
+                solutions_evaluated += 1;
                 if start.elapsed().as_nanos() > self.max_time {
                     break;
                 }
@@ -62,7 +63,6 @@ impl<'a> Solver for SteepestSolver<'a> {
             let best_neighbour_idx = random::<usize>() % (best_neighbours_num);
             best_neighbours_num = 0;
             best_neighbour_diff = 0;
-            solutions_evaluated += num_neighbours;
             starting_perm = move_to_neighbour(starting_perm, best_neighbours[best_neighbour_idx]);
             solutions_changes += 1;
         }
